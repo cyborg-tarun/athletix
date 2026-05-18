@@ -69,8 +69,8 @@ export default function MapPage() {
         </div>
         <GTAMap venues={filtered} height={620} />
         <p className="mt-3 text-center text-xs text-ink-300">
-          <strong className="text-white">{filtered.length}</strong> venues shown ·
-          stylised map for demo. Plug in Mapbox/Leaflet at <code className="rounded bg-white/5 px-1 py-0.5">src/components/map/gta-map.tsx</code> to ship real tiles.
+          <strong className="text-white">{filtered.length}</strong> live venues across the GTA ·
+          tap a pin for details · pinch / scroll to zoom
         </p>
       </section>
     </div>
