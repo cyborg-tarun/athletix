@@ -1,0 +1,12 @@
+{
+  "name": "ATHLETIX — Play Beyond Limits",
+  "short_name": "ATHLETIX",
+  "description": "Premium sports venue booking across the GTA.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05070b",
+  "theme_color": "#05070b",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

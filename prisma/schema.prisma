@@ -1,0 +1,210 @@
+// ATHLETIX · Prisma schema
+//
+// Models reflect the production data model. The demo app uses in-memory
+// data + a Zustand store so the schema is here for when you wire Supabase.
+//
+// Run:
+//   pnpm prisma migrate dev --name init
+//   pnpm prisma db seed
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Identity
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String?  @unique
+  email     String   @unique
+  name      String
+  phone     String?
+  avatarUrl String?
+
+  bookings      Booking[]
+  favorites     Favorite[]
+  reviews       Review[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Catalog
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Sport {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  name    String
+  emoji   String
+  tagline String
+  hero    String  @db.Text
+  venues  VenueSport[]
+
+  createdAt DateTime @default(now())
+}
+
+model Venue {
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  name            String
+  tagline         String
+  description     String  @db.Text
+
+  // Location
+  address         String
+  neighbourhood   String
+  city            String
+  lat             Float
+  lng             Float
+
+  // Pricing & rating
+  pricePerHour    Int
+  rating          Float   @default(0)
+  reviewCount     Int     @default(0)
+
+  // Attributes
+  surface         String   // Turf | Hardwood | Clay | Synthetic | Ice | Pool | Grass
+  indoor          Boolean  @default(true)
+  kidsFriendly    Boolean  @default(false)
+  parking         Boolean  @default(false)
+  coaching        Boolean  @default(false)
+  foodCourt       Boolean  @default(false)
+  washrooms       Boolean  @default(true)
+
+  amenities       String[] @default([])
+  rules           String[] @default([])
+  cancellationPolicy String  @default("")
+  images          String[] @default([])
+
+  featured        Boolean  @default(false)
+  occupancy       Int      @default(0)
+
+  ownerName       String?
+  ownerSince      Int?
+  ownerVerified   Boolean  @default(false)
+
+  // Relations
+  sports          VenueSport[]
+  slots           Slot[]
+  reviews         Review[]
+  bookings        Booking[]
+  favorites       Favorite[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model VenueSport {
+  venue   Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venueId String
+  sport   Sport  @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  sportId String
+
+  @@id([venueId, sportId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Booking
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Slot {
+  id        String   @id @default(cuid())
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venueId   String
+  date      DateTime
+  hour      Int
+  duration  Int      @default(1)
+  price     Int
+  available Boolean  @default(true)
+  bookings  Booking[]
+
+  @@unique([venueId, date, hour])
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  shortId   String   @unique          // ATX-…-…
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  venue     Venue    @relation(fields: [venueId], references: [id])
+  venueId   String
+  slot      Slot     @relation(fields: [slotId], references: [id])
+  slotId    String
+
+  date      DateTime
+  startHour Int
+  duration  Int
+
+  adults    Int      @default(1)
+  kids      Int      @default(0)
+
+  total     Int
+  status    BookingStatus @default(CONFIRMED)
+
+  createdAt DateTime @default(now())
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Social / Engagement
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venueId   String
+  rating    Int
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model Favorite {
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  venue     Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venueId   String
+  createdAt DateTime @default(now())
+
+  @@id([userId, venueId])
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  title     String
+  category  String   // Tournament | Open Play | Clinic | Match | News
+  sport     String
+  city      String
+  date      DateTime
+  image     String   @db.Text
+  excerpt   String   @db.Text
+  pill      String?
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  title     String
+  body      String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
